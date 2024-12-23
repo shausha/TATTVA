@@ -68,10 +68,7 @@ def create_tei(text_content):
     tei_header = etree.SubElement(root, "teiHeader")
     file_desc = etree.SubElement(tei_header, "fileDesc")
     title_stmt = etree.SubElement(file_desc, "titleStmt")
-    etree.SubElement(title_stmt, "title").text = "Uploaded Sanskrit Manuscript"
-    etree.SubElement(title_stmt, "author").text = "Unknown Author"
     publication_stmt = etree.SubElement(file_desc, "publicationStmt")
-    etree.SubElement(publication_stmt, "publisher").text = "Unknown Publisher"
     
     # Text section starts here
     text_elem = etree.SubElement(root, "text")
