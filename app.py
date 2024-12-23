@@ -32,6 +32,30 @@ def index():
         books = query_database("SELECT book_id, title, author FROM Metadata WHERE title LIKE ?", (f"%{book_name}%",))
     return render_template("index.html", books=books)
 
+@app.route("/upload", methods=["GET", "POST"])
+def upload():
+    if request.method == "POST":
+        title = request.form.get("title")
+        author = request.form.get("author")
+        year = request.form.get("year")
+        text_file = request.files.get("text_file")
+
+        # Validate the uploaded file
+        if not (text_file and allowed_file(text_file.filename)):
+            return "Invalid text file."
+
+        # Process the text file for TEI encoding
+        text_content = text_file.read().decode("utf-8")
+        tei_content = create_tei(text_content)
+
+        # Insert into the database
+        query_database(
+            "INSERT INTO Metadata (title, author, year, text) VALUES (?, ?, ?, ?)",
+            (title, author, year, tei_content)
+        )
+        return redirect(url_for("index"))
+    return render_template("upload.html")
+
 from lxml import etree
 
 def create_tei(text_content):
@@ -62,36 +86,6 @@ def create_tei(text_content):
     
     return etree.tostring(root, pretty_print=True, encoding="unicode", xml_declaration=True)
 
-# Updated file read function
-def read_file_content(file):
-    try:
-        # Attempt to decode as utf-8 first, fallback to latin1 if error occurs
-        return file.read().decode('utf-8')
-    except UnicodeDecodeError:
-        return file.read().decode('latin1')
-
-# Example usage within your Flask route
-@app.route("/upload", methods=["GET", "POST"])
-def upload():
-    if request.method == "POST":
-        text_file = request.files.get("text_file")
-
-        if not text_file:
-            return "No file provided."
-
-        # Read file content with proper encoding handling
-        text_content = read_file_content(text_file)
-
-        tei_content = create_tei(text_content)
-
-        # Insert into the database
-        query_database(
-            "INSERT INTO Metadata (title, author, year, text) VALUES (?, ?, ?, ?)",
-            ("Unknown Title", "Unknown Author", "Unknown Year", tei_content)
-        )
-        return redirect(url_for("index"))
-
-    return render_template("upload.html")
 
 @app.route("/book/<int:book_id>")
 def book(book_id):
