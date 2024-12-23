@@ -56,11 +56,24 @@ def upload():
         return redirect(url_for("index"))
     return render_template("upload.html")
 
+@app.route("/book/<int:book_id>")
+def book(book_id):
+    # Fetch book metadata
+    metadata = query_database("SELECT title, author, year, text FROM Metadata WHERE book_id = ?", (book_id,))
+    if not metadata:
+        return "Book not found.", 404
+
+    # Extract metadata fields
+    title, author, year, text = metadata[0]
+
+    # Pass these fields to the template
+    return render_template("book.html", title=title, author=author, year=year, text=text, book_id=book_id)
+
 from lxml import etree
 
 def create_tei(text_content):
     """Create TEI encoding for the given Sanskrit text with minimal structure."""
-
+    
     # Create the root TEI element
     root = etree.Element("TEI", xmlns="http://www.tei-c.org/ns/1.0")
     
@@ -84,22 +97,7 @@ def create_tei(text_content):
             p = etree.SubElement(body, "p")
             p.text = line
     
-    return etree.tostring(root, pretty_print=True, encoding="unicode", xml_declaration=True)
-
-
-@app.route("/book/<int:book_id>")
-def book(book_id):
-    # Fetch book metadata
-    metadata = query_database("SELECT title, author, year, text FROM Metadata WHERE book_id = ?", (book_id,))
-    if not metadata:
-        return "Book not found.", 404
-
-    # Extract metadata fields
-    title, author, year, text = metadata[0]
-
-    # Pass these fields to the template
-    return render_template("book.html", title=title, author=author, year=year, text=text, book_id=book_id)
-
+    return etree.tostring(root, encoding="unicode")
 
 if __name__ == "__main__":
     app.run(debug=True)
