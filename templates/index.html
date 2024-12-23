@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TATTVA: Transforming Ancient Texts</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        /* Additional Styles for the Homepage */
+        .logo-container {
+            text-align: center;
+            margin: 50px 0;
+        }
+        .logo-container img {
+            width: 150px;
+            height: auto;
+        }
+        .content {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: justify;
+        }
+        .section-title {
+            font-size: 1.8em;
+            margin-top: 30px;
+            color: #2c3e50;
+        }
+        .section-content {
+            font-size: 1.2em;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            color: #333;
+        }
+        .highlight {
+            font-weight: bold;
+            color: #3498db;
+        }
+        .cta-button {
+            text-align: center;
+            margin-top: 40px;
+        }
+        .cta-button a {
+            padding: 12px 20px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .cta-button a:hover {
+            background-color: #2980b9;
+        }
+
+        /* Search and Results Section */
+        .search-container {
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        .search-container form {
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        .search-container input[type="text"] {
+            padding: 10px;
+            width: 300px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .search-container button {
+            padding: 10px 15px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .search-container button:hover {
+            background-color: #2980b9;
+        }
+
+        .search-results {
+            margin-top: 30px;
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .search-results li {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+
+        .search-results a {
+            text-decoration: none;
+            color: #3498db;
+        }
+
+        .search-results a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <!-- Logo Section -->
+    <div class="logo-container">
+        <img src="/static/sastra.png" alt="SASTRA Logo">
+    </div>
+
+    <!-- Introduction Section -->
+    <div class="content">
+        <h1>TATTVA: Transforming Ancient Texts into Virtual Archives</h1>
+        <p><span class="highlight">Prof. B. Santhi</span><br>
+        SASTRA Deemed University</p>
+
+        <div class="section-title">Opening Remarks</div>
+        <div class="section-content">
+            In a world grappling with challenges like mental well-being, health crises, governance complexities, and legal dilemmas, can the answers to some of our most pressing problems lie buried in ancient wisdom? The Sanskrit texts, a treasure trove of unparalleled knowledge, hold solutions to questions we’re still asking today. From holistic healthcare principles to advanced administrative strategies, they encompass it all. Yet, this treasure remains locked in an encoded form.
+        </div>
+
+        <div class="section-title">Introduction</div>
+        <div class="section-content">
+            The question before us is: How can we leverage AI and novel technologies to decode these timeless insights? And more importantly, how can we, as innovators and contributors, propel India to the pinnacle of success by unlocking this wisdom for the world? This is not just a challenge—it is our opportunity to bridge the past and the future.
+        </div>
+
+        <div class="section-title">Preserving and Sharing Knowledge</div>
+        <div class="section-content">
+            We bear a profound responsibility to reiterate and emphasize the value of our ancient knowledge for current and future generations. Our ancestors were not just scholars of their times but interdisciplinary experts, mastering diverse domains with remarkable proficiency. They exemplified mental and physical strength, enabling them to address everyday challenges with wisdom and resilience.
+        </div>
+
+        <div class="section-title">Ancient Texts and Interdisciplinary Brilliance</div>
+        <div class="section-content">
+            Our ancient texts are a testament to the interdisciplinary brilliance of our ancestors, encompassing all walks of life. For instance, Brihat Samhita provides invaluable insights into diverse fields, from agriculture to astronomy. The Sulbasutras delve into the nuances of mathematical concepts, laying the foundation for advanced thought. The Sushruta Samhita serves as a cornerstone of medicine and Ayurveda, offering techniques for a healthy and balanced life.
+        </div>
+
+        <div class="cta-button">
+            <a href="/upload">Upload a New Book</a>
+        </div>
+    </div>
+
+    <!-- Sanskrit Book Search Section -->
+    <div class="search-container">
+        <h2>Sanskrit Book Search</h2>
+
+        <!-- Navigation Link to Upload -->
+        <a href="/upload" style="margin-bottom: 20px; display: inline-block;">Upload a New Book</a>
+
+        <!-- Search Form -->
+        <form method="POST">
+            <input type="text" name="book_name" placeholder="Enter book name" required>
+            <button type="submit">Search</button>
+        </form>
+
+        <!-- Display Search Results -->
+        {% if books %}
+            <h3>Search Results:</h3>
+            <ul class="search-results">
+                {% for book_id, title, author in books %}
+                    <li>
+                        <a href="/book/{{ book_id }}">{{ title }}</a> by {{ author }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+</body>
+</html>
