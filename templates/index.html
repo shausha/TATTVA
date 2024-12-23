@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TATTVA: Transforming Ancient Texts</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        /* Header Styles */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background-color: #3498db;
+        }
+
+        .logo-container img {
+            width: 50px;
+            height: auto;
+        }
+
+        .logo-title {
+            font-size: 2em;
+            color: white;
+            margin-left: 10px;
+        }
+
+        .search-container {
+            display: flex;
+            align-items: center;
+        }
+
+        .search-container input[type="text"] {
+            padding: 10px;
+            width: 300px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .search-container button {
+            padding: 10px 15px;
+            background-color: #2980b9;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .search-container button:hover {
+            background-color: #1d6fa5;
+        }
+
+        /* Home Page Styles */
+        .content {
+            max-width: 1000px;
+            margin: 30px auto;
+            display: flex;
+            justify-content: space-between;
+            gap: 30px;
+        }
+
+        .card {
+            width: 45%;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h3 {
+            margin-top: 0;
+        }
+
+        .about-project {
+            background-color: #f0f8ff;
+        }
+
+        .upload-option {
+            background-color: #f9f9f9;
+        }
+
+        .cta-button {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .cta-button a {
+            padding: 12px 20px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+
+        .cta-button a:hover {
+            background-color: #2980b9;
+        }
+
+        /* Search Results Styles */
+        .search-results {
+            list-style-type: none;
+            padding: 0;
+            margin-top: 30px;
+        }
+
+        .search-results li {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+
+        .search-results a {
+            text-decoration: none;
+            color: #2980b9;
+        }
+
+        .search-results a:hover {
+            text-decoration: underline;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 20px;
+            background-color: #3498db;
+            color: white;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Header Section -->
+<header>
+    <div style="display: flex; align-items: center;">
+        <div class="logo-container">
+            <img src="/static/sastra.png" alt="SASTRA Logo">
+        </div>
+        <div class="logo-title">TATTVA</div>
+    </div>
+
+    <!-- Search Form -->
+    <div class="search-container">
+        <form method="POST">
+            <input type="text" name="book_name" placeholder="Enter book name" required>
+            <button type="submit">Search</button>
+        </form>
+    </div>
+</header>
+
+<!-- Main Content -->
+<div class="content">
+    <!-- Left Card: About the Project -->
+    <div class="card about-project">
+        <h3>About the Project</h3>
+        <p>
+            TATTVA aims to transform ancient Sanskrit texts into a digital format, providing a repository for learning, research, and dissemination. By harnessing AI and digital technology, we unlock the wisdom embedded in ancient scriptures, making them accessible for current and future generations.
+        </p>
+    </div>
+
+    <!-- Right Card: Upload Option -->
+    <div class="card upload-option">
+        <h3>Upload a New Book</h3>
+        <p>
+            Contribute to the project by uploading Sanskrit texts for further analysis, digitization, and sharing. Help preserve ancient wisdom for posterity.
+        </p>
+        <div class="cta-button">
+            <a href="/upload">Upload a New Book</a>
+        </div>
+    </div>
+</div>
+
+<!-- Search Results Section -->
+<div class="search-results">
+    {% if books %}
+        <h3>Search Results:</h3>
+        <ul>
+            {% for book_id, title, author in books %}
+                <li>
+                    <a href="/book/{{ book_id }}">{{ title }}</a> by {{ author }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No books found matching your search.</p>
+    {% endif %}
+</div>
+
+<!-- Footer -->
+<footer>
+    <p>&copy; 2024 TATTVA | All rights reserved.</p>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ title }}</title>
+</head>
+<body>
+    <h1>{{ title }}</h1>
+    <p><strong>Author:</strong> {{ author }}</p>
+    <p><strong>Year:</strong> {{ year }}</p>
+    <div style="width: 100%; height: 600px; overflow-y: scroll; border: 1px solid black;">
+        {{ text | safe }}
+    </div>
+    <a href="/">Back to Search</a>
+</body>
+</html>
