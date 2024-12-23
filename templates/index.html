@@ -6,36 +6,72 @@
     <title>TATTVA: Transforming Ancient Texts</title>
     <link rel="stylesheet" href="/static/style.css">
     <style>
+        /* General Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Full Height Layout */
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            font-family: Arial, sans-serif;
+        }
+
         /* Header Styles */
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px;
+            padding: 20px 30px;
             background-color: #3498db;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
         }
 
         .logo-container img {
-            width: 50px;
+            width: 200px;
             height: auto;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .logo-container img:hover {
+            transform: scale(1.1);
         }
 
         .logo-title {
-            font-size: 2em;
+            font-size: 2.5em;
             color: white;
-            margin-left: 10px;
+            margin-left: 15px;
+            letter-spacing: 2px;
+            font-weight: bold;
+            font-family: 'Times New Roman', Times, serif;
+            transition: transform 0.3s ease, color 0.3s ease;
+        }
+
+        .logo-title:hover {
+            transform: scale(1.1);
+            color: #ff6347;
         }
 
         .search-container {
             display: flex;
             align-items: center;
+            position: relative;
         }
 
         .search-container input[type="text"] {
             padding: 10px;
-            width: 300px;
+            width: 250px;
             border: 1px solid #ccc;
             border-radius: 4px;
+            font-size: 1rem;
         }
 
         .search-container button {
@@ -45,19 +81,48 @@
             border: none;
             border-radius: 4px;
             cursor: pointer;
+            margin-left: 10px;
+            font-size: 1rem;
         }
 
         .search-container button:hover {
             background-color: #1d6fa5;
         }
 
-        /* Home Page Styles */
+        .search-dropdown {
+            position: absolute;
+            top: 45px;
+            left: 0;
+            right: 0;
+            border: 1px solid #ccc;
+            background-color: white;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+
+        .search-dropdown a {
+            padding: 10px;
+            display: block;
+            text-decoration: none;
+            color: #2980b9;
+            transition: background-color 0.3s ease;
+        }
+
+        .search-dropdown a:hover {
+            background-color: #f0f0f0;
+        }
+
+        /* Main Content Styles */
         .content {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 30px auto;
             display: flex;
             justify-content: space-between;
             gap: 30px;
+            flex-wrap: wrap;
+            flex: 1;
         }
 
         .card {
@@ -65,10 +130,18 @@
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
         }
 
         .card h3 {
             margin-top: 0;
+            font-size: 1.5rem;
+            color: #2980b9;
         }
 
         .about-project {
@@ -90,42 +163,45 @@
             color: white;
             text-decoration: none;
             border-radius: 5px;
+            transition: background-color 0.3s ease;
         }
 
         .cta-button a:hover {
             background-color: #2980b9;
         }
 
-        /* Search Results Styles */
-        .search-results {
-            list-style-type: none;
-            padding: 0;
-            margin-top: 30px;
-        }
-
-        .search-results li {
-            font-size: 1.2em;
-            margin-bottom: 10px;
-        }
-
-        .search-results a {
-            text-decoration: none;
-            color: #2980b9;
-        }
-
-        .search-results a:hover {
-            text-decoration: underline;
-        }
-
-        /* Footer */
+        /* Footer Styles */
         footer {
-            text-align: center;
+            width: 100%;
             padding: 20px;
             background-color: #3498db;
             color: white;
-            position: fixed;
-            bottom: 0;
-            width: 100%;
+            text-align: center;
+            font-size: 0.9rem;
+            position: relative;
+            box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.1);
+            margin-top: auto; /* Ensures footer stays at the bottom */
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .content {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .card {
+                width: 80%;
+                margin-bottom: 20px;
+            }
+
+            .search-container input[type="text"] {
+                width: 200px;
+            }
+
+            .logo-title {
+                font-size: 2em;
+            }
         }
     </style>
 </head>
@@ -142,10 +218,11 @@
 
     <!-- Search Form -->
     <div class="search-container">
-        <form method="POST">
-            <input type="text" name="book_name" placeholder="Enter book name" required>
+        <form id="search-form" method="POST">
+            <input type="text" name="book_name" id="book-name" placeholder="Enter book name" required autocomplete="off">
             <button type="submit">Search</button>
         </form>
+        <div class="search-dropdown" id="search-dropdown"></div>
     </div>
 </header>
 
@@ -153,44 +230,84 @@
 <div class="content">
     <!-- Left Card: About the Project -->
     <div class="card about-project">
-        <h3>About the Project</h3>
+        <h3>About TATTVA</h3><br>
         <p>
-            TATTVA aims to transform ancient Sanskrit texts into a digital format, providing a repository for learning, research, and dissemination. By harnessing AI and digital technology, we unlock the wisdom embedded in ancient scriptures, making them accessible for current and future generations.
-        </p>
+            <strong>TATTVA (Transforming Ancient Texts into Virtual Archives) </strong> is a pioneering project aimed at transforming India's ancient Sanskrit texts into a digital repository of knowledge. By leveraging AI and advanced OCR technology, the initiative focuses on:
+        </p><br>
+        <ul>
+            <li>Unlocking the vast wisdom embedded in ancient texts for current and future generations.</li>
+            <li>Making this invaluable knowledge accessible worldwide through digital formats.</li>
+            <li>Preserving and sharing the teachings of our ancestors for research, education, and global collaboration.</li>
+            <li>Bridging the gap between the rich cultural heritage of the past and the technological advancements of the future.</li>
+            <li>Creating a sustainable platform for the enrichment and advancement of humanity through timeless knowledge.</li>
+        </ul>
     </div>
 
     <!-- Right Card: Upload Option -->
     <div class="card upload-option">
-        <h3>Upload a New Book</h3>
+        <h3>Upload a New Book</h3><br>
         <p>
-            Contribute to the project by uploading Sanskrit texts for further analysis, digitization, and sharing. Help preserve ancient wisdom for posterity.
-        </p>
+            Contribute to the TATTVA project by uploading Sanskrit texts for digitization, preservation, and analysis. By participating, you can help in the following ways:
+        </p><br>
+        <ul>
+            <li><strong>Preserve Ancient Wisdom:</strong> Contribute to the preservation of ancient Sanskrit texts for future generations.</li>
+            <li><strong>Promote Global Accessibility:</strong> Help make valuable knowledge available worldwide through digital formats.</li>
+            <li><strong>Support Research and Education:</strong> Your contribution will aid in research, education, and global collaboration.</li>
+            <li><strong>Bridge Cultural Heritage and Technology:</strong> Play a key role in blending India's rich cultural heritage with modern technological advancements.</li>
+        </ul><br>
         <div class="cta-button">
             <a href="/upload">Upload a New Book</a>
         </div>
     </div>
 </div>
 
-<!-- Search Results Section -->
-<div class="search-results">
-    {% if books %}
-        <h3>Search Results:</h3>
-        <ul>
-            {% for book_id, title, author in books %}
-                <li>
-                    <a href="/book/{{ book_id }}">{{ title }}</a> by {{ author }}
-                </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>No books found matching your search.</p>
-    {% endif %}
-</div>
-
 <!-- Footer -->
 <footer>
     <p>&copy; 2024 TATTVA | All rights reserved.</p>
 </footer>
+
+<script>
+    // Get the search input element and the dropdown element
+    const searchInput = document.getElementById("book-name");
+    const searchDropdown = document.getElementById("search-dropdown");
+
+    // Add event listener to detect input changes
+    searchInput.addEventListener("input", function () {
+        const query = searchInput.value;
+
+        // Only trigger search if the input is not empty
+        if (query.length > 2) {
+            fetch(`/search?query=${query}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Clear any previous results
+                    searchDropdown.innerHTML = '';
+
+                    // If there are results, display them in the dropdown
+                    if (data.books.length > 0) {
+                        data.books.forEach(book => {
+                            const bookLink = document.createElement('a');
+                            bookLink.href = `/book/${book.book_id}`;
+                            bookLink.textContent = `${book.title} by ${book.author}`;
+                            searchDropdown.appendChild(bookLink);
+                        });
+                        searchDropdown.style.display = 'block';
+                    } else {
+                        searchDropdown.style.display = 'none';
+                    }
+                });
+        } else {
+            searchDropdown.style.display = 'none';
+        }
+    });
+
+    // Close the dropdown when the user clicks outside of it
+    document.addEventListener("click", function (event) {
+        if (!event.target.closest('.search-container')) {
+            searchDropdown.style.display = 'none';
+        }
+    });
+</script>
 
 </body>
 </html>

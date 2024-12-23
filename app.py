@@ -1,26 +1,17 @@
-from flask import Flask, request, render_template, redirect, url_for
+from flask import Flask, request, render_template, redirect, url_for, send_file, jsonify
 import sqlite3
-from lxml import etree
+from io import BytesIO
 from werkzeug.utils import secure_filename
 import os
-import re
 
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = "uploads"
-app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024  # 50 MB
-
-# Allowed file extensions
-ALLOWED_EXTENSIONS = {'txt'}
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def query_database(query, params=()):
     conn = sqlite3.connect("sanskrit.db")
     cursor = conn.cursor()
     cursor.execute(query, params)
     results = cursor.fetchall()
-    conn.commit()
     conn.close()
     return results
 
@@ -32,71 +23,89 @@ def index():
         books = query_database("SELECT book_id, title, author FROM Metadata WHERE title LIKE ?", (f"%{book_name}%",))
     return render_template("index.html", books=books)
 
+@app.route("/book/<int:book_id>")
+def book(book_id):
+    # Fetch metadata (title, author, year)
+    metadata = query_database("SELECT title, author, year FROM Metadata WHERE book_id = ?", (book_id,))
+    # Fetch content (full text of the book)
+    content = query_database("SELECT text FROM Content WHERE book_id = ?", (book_id,))
+
+    if not metadata or not content:
+        return "Book not found.", 404
+
+    # Metadata is a list, so we need to unpack it
+    title, author, year = metadata[0]
+
+    # Pass book_id, title, author, year, and content to the template
+    return render_template("book.html", 
+                           title=title, 
+                           author=author, 
+                           year=year, 
+                           content=content[0][0],  # Only passing the first content entry
+                           book_id=book_id)
+
 @app.route("/upload", methods=["GET", "POST"])
 def upload():
     if request.method == "POST":
-        title = request.form.get("title")
-        author = request.form.get("author")
-        year = request.form.get("year")
-        text_file = request.files.get("text_file")
+        title = request.form["title"]
+        author = request.form["author"]
+        year = request.form["year"]
+        file = request.files["file"]
+        
+        # Ensure the file is allowed (only .txt files)
+        if file and file.filename.endswith(".txt"):
+            # Read the content from the uploaded file
+            file_content = file.read().decode("utf-8")  # Decode the file content as UTF-8
 
-        # Validate the uploaded file
-        if not (text_file and allowed_file(text_file.filename)):
-            return "Invalid text file."
+            # Insert book metadata into the database
+            conn = sqlite3.connect("sanskrit.db")
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO Metadata (title, author, year) VALUES (?, ?, ?)",
+                (title, author, year)
+            )
+            book_id = cursor.lastrowid  # Get the ID of the inserted book
+            conn.commit()
 
-        # Process the text file for TEI encoding
-        text_content = text_file.read().decode("utf-8")
-        tei_content = create_tei(text_content)
+            # Insert the entire content into the Content table
+            cursor.execute(
+                "INSERT INTO Content (book_id, text) VALUES (?, ?)",
+                (book_id, file_content)  # Insert the full text content of the file
+            )
+            conn.commit()
 
-        # Insert into the database
-        query_database(
-            "INSERT INTO Metadata (title, author, year, text) VALUES (?, ?, ?, ?)",
-            (title, author, year, tei_content)
-        )
-        return redirect(url_for("index"))
+            conn.close()
+
+            # Redirect to the index page after successful upload
+            return redirect(url_for("index"))  # Redirect to the home page
+
     return render_template("upload.html")
-
-from lxml import etree
-
-def create_tei(text_content):
-    """Create TEI encoding for the given Sanskrit text with minimal structure."""
+@app.route("/book/<int:book_id>/download")
+def download(book_id):
+    # Fetch the content of the book from the Content table
+    content = query_database("SELECT text FROM Content WHERE book_id = ?", (book_id,))
     
-    # Create the root TEI element
-    root = etree.Element("TEI", xmlns="http://www.tei-c.org/ns/1.0")
-    
-    # TEI Header
-    tei_header = etree.SubElement(root, "teiHeader")
-    file_desc = etree.SubElement(tei_header, "fileDesc")
-    title_stmt = etree.SubElement(file_desc, "titleStmt")
-    publication_stmt = etree.SubElement(file_desc, "publicationStmt")
-    
-    # Text section starts here
-    text_elem = etree.SubElement(root, "text")
-    body = etree.SubElement(text_elem, "body")
-    
-    paragraphs = text_content.splitlines()
-    for line in paragraphs:
-        line = line.strip()
-        if line:
-            p = etree.SubElement(body, "p")
-            p.text = line
-    
-    return etree.tostring(root, encoding="unicode")
-
-
-@app.route("/book/<int:book_id>")
-def book(book_id):
-    # Fetch book metadata
-    metadata = query_database("SELECT title, author, year, text FROM Metadata WHERE book_id = ?", (book_id,))
-    if not metadata:
+    if not content:
         return "Book not found.", 404
 
-    # Extract metadata fields
-    title, author, year, text = metadata[0]
+    # Get the content text (assuming the content is in the first column of the result)
+    text_content = content[0][0]
 
-    # Pass these fields to the template
-    return render_template("book.html", title=title, author=author, year=year, text=text, book_id=book_id)
+    # Create an in-memory file to send as a response
+    file_io = BytesIO()
+    file_io.write(text_content.encode("utf-8"))
+    file_io.seek(0)
 
+    # Send the file to the user as an attachment with a .txt extension
+    return send_file(file_io, as_attachment=True, download_name=f"book_{book_id}.txt", mimetype="text/plain")
+
+@app.route("/search")
+def search():
+    query = request.args.get("query")
+    if query:
+        books = query_database("SELECT book_id, title, author FROM Metadata WHERE title LIKE ?", (f"%{query}%",))
+        return jsonify({"books": [{"book_id": book[0], "title": book[1], "author": book[2]} for book in books]})
+    return jsonify({"books": []})
 
 if __name__ == "__main__":
     app.run(debug=True)

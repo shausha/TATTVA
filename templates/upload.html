@@ -3,77 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload Book</title>
+    <title>Upload Sanskrit Book</title>
+    <link rel="stylesheet" href="/static/style.css">
     <style>
+        /* General Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Page Styles */
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f9;
             padding: 20px;
-            background-color: #f4f4f4;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2980b9;
+            margin-bottom: 20px;
         }
 
         form {
-            margin-top: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
         label {
-            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+            display: block;
         }
 
-        input[type="text"], input[type="file"] {
+        input[type="text"],
+        input[type="number"],
+        input[type="file"] {
             width: 100%;
             padding: 10px;
-            margin: 10px 0;
+            margin-bottom: 15px;
             border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1rem;
         }
 
         button {
-            padding: 10px 20px;
-            background-color: #4CAF50;
+            padding: 12px 20px;
+            background-color: #3498db;
             color: white;
             border: none;
+            border-radius: 5px;
             cursor: pointer;
+            font-size: 1.1rem;
+            width: 100%;
+            transition: background-color 0.3s ease;
         }
 
         button:hover {
-            background-color: #45a049;
+            background-color: #2980b9;
         }
 
-        .instructions {
-            margin-bottom: 20px;
-            font-size: 14px;
-        }
-
-        .error-message {
-            color: red;
+        a {
+            display: inline-block;
             margin-top: 20px;
+            text-align: center;
+            color: #2980b9;
+            text-decoration: none;
+            font-size: 1rem;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            form {
+                padding: 20px;
+            }
         }
     </style>
 </head>
 <body>
-    <h1>Upload Book</h1>
-    <div class="instructions">
-        <p>Upload a book by providing a text file (.txt).</p>
-        <p>Maximum file size: 16 MB</p>
-    </div>
-    <form method="POST" enctype="multipart/form-data">
-        <label for="title">Title:</label>
-        <input type="text" id="title" name="title" required><br><br>
-        
-        <label for="author">Author:</label>
-        <input type="text" id="author" name="author" required><br><br>
-        
-        <label for="year">Year:</label>
-        <input type="text" id="year" name="year" required><br><br>
-        
-        <label for="text_file">Text File:</label>
-        <input type="file" id="text_file" name="text_file" accept=".txt" required><br><br>
-        
-        <button type="submit">Upload</button>
-    </form>
 
-    {% if error %}
-        <p class="error-message">{{ error }}</p>
-    {% endif %}
+<h1>Upload a Sanskrit Book</h1>
+
+<!-- Upload Form -->
+<form action="/upload" method="POST" enctype="multipart/form-data">
+    <label for="title">Book Title:</label>
+    <input type="text" id="title" name="title" required><br>
+
+    <label for="author">Author:</label>
+    <input type="text" id="author" name="author" required><br>
+
+    <label for="year">Year:</label>
+    <input type="number" id="year" name="year" required><br>
+
+    <label for="file">Upload File:</label>
+    <input type="file" id="file" name="file" accept=".txt" required><br>
+
+    <button type="submit">Upload</button>
+</form>
+
+<!-- Back Link -->
+<a href="/">Back to Home</a>
+
 </body>
 </html>
