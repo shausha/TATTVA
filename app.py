@@ -6,7 +6,6 @@ import os
 
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = "uploads"
-from flask_app import app  # Import your Flask app
 import serverless_wsgi
 
 def handler(event, context):
