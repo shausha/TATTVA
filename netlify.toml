@@ -1,23 +1,17 @@
 [build]
   command = "pip install -r requirements.txt"
-  functions = "netlify/functions"
-
-[dev]
-  command = "python app.py"
-  port = 8888
-  targetPort = 5000
   publish = "."
+  functions = ".netlify/functions"
+
+[build.environment]
+  PYTHON_VERSION = "3.10"
 
 [[redirects]]
   from = "/*"
   to = "/.netlify/functions/app"
   status = 200
-
-[functions]
-  directory = "netlify/functions"
-  node_bundler = "esbuild"
-
-[build.environment]
-  PYTHON_VERSION = "3.10"
-  FLASK_ENV = "production"
-  # The actual MongoDB URI and DB name will be set in Netlify environment settings
+[[plugins]]
+  package = "netlify-plugin-persist-sqlite"
+  
+  [plugins.inputs]
+    include = ["sanskrit.db"]
