@@ -104,49 +104,6 @@
         .back-link a:hover {
             text-decoration: underline;
         }
-
-        /* Format selection styles */
-        .format-options {
-            margin: 20px 0;
-            text-align: center;
-        }
-        
-        .format-btn {
-            display: inline-block;
-            padding: 8px 16px;
-            margin: 0 5px;
-            background-color: #f0f0f0;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            text-decoration: none;
-            color: #333;
-        }
-        
-        .format-btn.active {
-            background-color: #007bff;
-            color: white;
-            border-color: #0056b3;
-        }
-        
-        /* TEI specific styles */
-        .tei-content {
-            font-family: monospace;
-            white-space: pre-wrap;
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 5px;
-            overflow-x: auto;
-        }
-        
-        .entities-content persName {
-            color: #d63384;
-            font-weight: bold;
-        }
-        
-        .entities-content placeName {
-            color: #198754;
-            font-weight: bold;
-        }
     </style>
 </head>
 <body>
@@ -156,25 +113,11 @@
             <p><strong>Author:</strong> {{ author }}</p>
             <p><strong>Year:</strong> {{ year }}</p>
         </div>
-        
-        <!-- Format selection options -->
-        <div class="format-options">
-            <a href="{{ url_for('book', book_id=book_id, format='plain') }}" class="format-btn {% if content_type == 'plain' %}active{% endif %}">Plain Text</a>
-            <a href="{{ url_for('book', book_id=book_id, format='tei') }}" class="format-btn {% if content_type == 'tei' %}active{% endif %}">TEI XML</a>
-            <a href="{{ url_for('book', book_id=book_id, format='entities') }}" class="format-btn {% if content_type == 'entities' %}active{% endif %}">Entities</a>
-        </div>
-        
-        <!-- Content display with appropriate class based on format -->
-        <div class="content {{ content_type }}-content">
+        <div class="content">
             {{ content | safe }}
         </div>
-        
-        <!-- Download options -->
-        <div style="text-align: center; margin-top: 20px;">
-            <a href="{{ url_for('download', book_id=book_id) }}" class="btn" style="margin-right: 10px;">Download Text</a>
-            <a href="{{ url_for('download', book_id=book_id, format='tei') }}" class="btn">Download TEI XML</a>
-        </div>
-        
+        <!-- Updated download link -->
+        <a href="{{ url_for('download', book_id=book_id) }}" class="btn" download="{{ title }}.txt">Download Text File</a>
         <div class="back-link">
             <a href="/">Back to Search</a>
         </div>

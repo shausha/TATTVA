@@ -35,33 +35,13 @@ def book(book_id):
 
     # Metadata is a list, so we need to unpack it
     title, author, year = metadata[0]
-    
-    # Get the format parameter (default to 'plain')
-    format_type = request.args.get('format', 'plain')
-    
-    # Get the raw content
-    raw_content = content[0][0]
-    
-    if format_type == 'tei':
-        # Convert to TEI format
-        display_content = convert_to_tei(title, author, year, raw_content)
-        content_type = 'tei'
-    elif format_type == 'entities':
-        # Identify and mark entities
-        display_content = identify_entities(raw_content)
-        content_type = 'entities'
-    else:
-        # Plain text
-        display_content = raw_content
-        content_type = 'plain'
 
     # Pass book_id, title, author, year, and content to the template
     return render_template("book.html", 
                            title=title, 
                            author=author, 
                            year=year, 
-                           content=display_content,
-                           content_type=content_type,
+                           content=content[0][0],  # Only passing the first content entry
                            book_id=book_id)
 
 @app.route("/upload", methods=["GET", "POST"])
@@ -102,43 +82,23 @@ def upload():
     return render_template("upload.html")
 @app.route("/book/<int:book_id>/download")
 def download(book_id):
-    # Fetch metadata and content
-    metadata = query_database("SELECT title, author, year FROM Metadata WHERE book_id = ?", (book_id,))
+    # Fetch the content of the book from the Content table
     content = query_database("SELECT text FROM Content WHERE book_id = ?", (book_id,))
     
-    if not metadata or not content:
+    if not content:
         return "Book not found.", 404
-    
-    # Get format parameter (default to txt)
-    format_type = request.args.get('format', 'txt')
-    
-    title, author, year = metadata[0]
+
+    # Get the content text (assuming the content is in the first column of the result)
     text_content = content[0][0]
-    
-    # Create an in-memory file
+
+    # Create an in-memory file to send as a response
     file_io = BytesIO()
-    
-    if format_type == 'tei':
-        # Convert to TEI XML
-        tei_content = convert_to_tei(title, author, year, text_content)
-        file_io.write(tei_content.encode("utf-8"))
-        mimetype = "application/xml"
-        extension = "xml"
-    else:
-        # Plain text
-        file_io.write(text_content.encode("utf-8"))
-        mimetype = "text/plain"
-        extension = "txt"
-    
+    file_io.write(text_content.encode("utf-8"))
     file_io.seek(0)
-    
-    # Send the file with appropriate name and mimetype
-    return send_file(
-        file_io, 
-        as_attachment=True, 
-        download_name=f"{secure_filename(title)}.{extension}", 
-        mimetype=mimetype
-    )
+
+    # Send the file to the user as an attachment with a .txt extension
+    return send_file(file_io, as_attachment=True, download_name=f"book_{book_id}.txt", mimetype="text/plain")
+
 @app.route("/search")
 def search():
     query = request.args.get("query")
