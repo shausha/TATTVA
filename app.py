@@ -139,7 +139,6 @@ def download(book_id):
         download_name=f"{secure_filename(title)}.{extension}", 
         mimetype=mimetype
     )
-
 @app.route("/search")
 def search():
     query = request.args.get("query")
