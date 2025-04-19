@@ -1,0 +1,15 @@
+[build]
+  command = "pip install -r requirements.txt"
+  publish = "."
+  functions = "netlify/functions"
+
+[build.environment]
+  PYTHON_VERSION = "3.10"
+  # Replace with your MongoDB Atlas connection string
+  MONGODB_URI = "mongodb+srv://ushajawahar23:ushausha@tattva.n09jmdw.mongodb.net/"
+  MONGODB_DB = "tattva"
+
+[[redirects]]
+  from = "/*"
+  to = "/.netlify/functions/app"
+  status = 200
