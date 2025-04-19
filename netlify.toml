@@ -1,16 +1,23 @@
 [build]
   command = "pip install -r requirements.txt"
-  publish = "."
   functions = "netlify/functions"
 
-[build.environment]
-  PYTHON_VERSION = "3.10"
-  # The actual MongoDB URI will be set in Netlify environment settings
-  # This is just a placeholder
-  MONGODB_URI = "mongodb+srv://placeholder:placeholder@cluster.mongodb.net/"
-  MONGODB_DB = "tattva"
+[dev]
+  command = "python app.py"
+  port = 8888
+  targetPort = 5000
+  publish = "."
 
 [[redirects]]
   from = "/*"
   to = "/.netlify/functions/app"
   status = 200
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+[build.environment]
+  PYTHON_VERSION = "3.10"
+  FLASK_ENV = "production"
+  # The actual MongoDB URI and DB name will be set in Netlify environment settings
