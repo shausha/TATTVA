@@ -8,16 +8,24 @@ import os
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = "uploads"
 
+from pymongo.mongo_client import MongoClient
+from pymongo.server_api import ServerApi
+
 # MongoDB connection
-# MongoDB connection
-client = MongoClient(
-    "mongodb+srv://ushajawahar23:ushausha@tattva.n09jmdw.mongodb.net/",
-    tls=True,
-    tlsAllowInvalidCertificates=True,  # Replaces ssl_cert_reqs='CERT_NONE'
-    connectTimeoutMS=30000,
-    serverSelectionTimeoutMS=30000,
-    retryWrites=True
-)
+uri = "mongodb+srv://ushajawahar23:ushausha@tattva.n09jmdw.mongodb.net/?retryWrites=true&w=majority&appName=Tattva"
+
+# Create a new client and connect to the server
+client = MongoClient(uri, server_api=ServerApi('1'))
+
+# Test the connection (you can remove this part in production)
+try:
+    # Send a ping to confirm a successful connection
+    client.admin.command('ping')
+    print("Pinged your deployment. You successfully connected to MongoDB!")
+except Exception as e:
+    print(f"Connection error: {e}")
+
+# Set your database
 db = client["tattva"]
 
 @app.route("/", methods=["GET", "POST"])
