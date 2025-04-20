@@ -7,14 +7,10 @@ import os
 
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = "uploads"
-import serverless_wsgi
 
 # MongoDB connection
 client = MongoClient("mongodb+srv://ushajawahar23:ushausha@tattva.n09jmdw.mongodb.net/")
 db = client["tattva"]
-
-def handler(event, context):
-    return serverless_wsgi.handle_request(app, event, context)
 
 @app.route("/", methods=["GET", "POST"])
 def index():
