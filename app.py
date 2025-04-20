@@ -1,5 +1,6 @@
 from flask import Flask, request, render_template, redirect, url_for, send_file, jsonify
-import sqlite3
+from pymongo import MongoClient
+from bson.objectid import ObjectId
 from io import BytesIO
 from werkzeug.utils import secure_filename
 import os
@@ -8,44 +9,47 @@ app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = "uploads"
 import serverless_wsgi
 
+# MongoDB connection
+client = MongoClient("mongodb+srv://ushajawahar23:ushausha@tattva.n09jmdw.mongodb.net/")
+db = client["tattva"]
+
 def handler(event, context):
     return serverless_wsgi.handle_request(app, event, context)
-def query_database(query, params=()):
-    conn = sqlite3.connect("sanskrit.db")
-    cursor = conn.cursor()
-    cursor.execute(query, params)
-    results = cursor.fetchall()
-    conn.close()
-    return results
 
 @app.route("/", methods=["GET", "POST"])
 def index():
     books = []
     if request.method == "POST":
         book_name = request.form.get("book_name")
-        books = query_database("SELECT book_id, title, author FROM Metadata WHERE title LIKE ?", (f"%{book_name}%",))
+        # MongoDB query with case-insensitive search
+        books = list(db.metadata.find({"title": {"$regex": book_name, "$options": "i"}}, 
+                                    {"_id": 1, "title": 1, "author": 1}))
+        # Transform MongoDB _id to book_id for compatibility
+        for book in books:
+            book["book_id"] = str(book["_id"])
     return render_template("index.html", books=books)
 
-@app.route("/book/<int:book_id>")
+@app.route("/book/<book_id>")
 def book(book_id):
     # Fetch metadata (title, author, year)
-    metadata = query_database("SELECT title, author, year FROM Metadata WHERE book_id = ?", (book_id,))
-    # Fetch content (full text of the book)
-    content = query_database("SELECT text FROM Content WHERE book_id = ?", (book_id,))
+    try:
+        # Convert string ID to ObjectId for MongoDB
+        metadata = db.metadata.find_one({"_id": ObjectId(book_id)})
+        # Fetch content (full text of the book)
+        content = db.content.find_one({"book_id": ObjectId(book_id)})
 
-    if not metadata or not content:
-        return "Book not found.", 404
+        if not metadata or not content:
+            return "Book not found.", 404
 
-    # Metadata is a list, so we need to unpack it
-    title, author, year = metadata[0]
-
-    # Pass book_id, title, author, year, and content to the template
-    return render_template("book.html", 
-                           title=title, 
-                           author=author, 
-                           year=year, 
-                           content=content[0][0],  # Only passing the first content entry
-                           book_id=book_id)
+        # Pass book_id, title, author, year, and content to the template
+        return render_template("book.html", 
+                            title=metadata.get("title"), 
+                            author=metadata.get("author"), 
+                            year=metadata.get("year"), 
+                            content=content.get("text"),  # Get the text content
+                            book_id=book_id)
+    except Exception as e:
+        return f"Error: {str(e)}", 500
 
 @app.route("/upload", methods=["GET", "POST"])
 def upload():
@@ -60,54 +64,68 @@ def upload():
             # Read the content from the uploaded file
             file_content = file.read().decode("utf-8")  # Decode the file content as UTF-8
 
-            # Insert book metadata into the database
-            conn = sqlite3.connect("sanskrit.db")
-            cursor = conn.cursor()
-            cursor.execute(
-                "INSERT INTO Metadata (title, author, year) VALUES (?, ?, ?)",
-                (title, author, year)
-            )
-            book_id = cursor.lastrowid  # Get the ID of the inserted book
-            conn.commit()
+            # Insert book metadata into MongoDB
+            metadata_result = db.metadata.insert_one({
+                "title": title,
+                "author": author,
+                "year": year
+            })
+            
+            # Get the ID of the inserted metadata document
+            book_id = metadata_result.inserted_id
 
-            # Insert the entire content into the Content table
-            cursor.execute(
-                "INSERT INTO Content (book_id, text) VALUES (?, ?)",
-                (book_id, file_content)  # Insert the full text content of the file
-            )
-            conn.commit()
-
-            conn.close()
+            # Insert the entire content into the Content collection
+            db.content.insert_one({
+                "book_id": book_id,
+                "text": file_content  # Insert the full text content of the file
+            })
 
             # Redirect to the index page after successful upload
             return redirect(url_for("index"))  # Redirect to the home page
 
     return render_template("upload.html")
-@app.route("/book/<int:book_id>/download")
+@app.route("/book/<book_id>/download")
 def download(book_id):
-    # Fetch the content of the book from the Content table
-    content = query_database("SELECT text FROM Content WHERE book_id = ?", (book_id,))
-    
-    if not content:
-        return "Book not found.", 404
+    try:
+        # Fetch the content of the book from the Content collection
+        content = db.content.find_one({"book_id": ObjectId(book_id)})
+        
+        if not content:
+            return "Book not found.", 404
 
-    # Get the content text (assuming the content is in the first column of the result)
-    text_content = content[0][0]
+        # Get the content text
+        text_content = content.get("text", "")
 
-    # Create an in-memory file to send as a response
-    file_io = BytesIO()
-    file_io.write(text_content.encode("utf-8"))
-    file_io.seek(0)
+        # Create an in-memory file to send as a response
+        file_io = BytesIO()
+        file_io.write(text_content.encode("utf-8"))
+        file_io.seek(0)
 
-    # Send the file to the user as an attachment with a .txt extension
-    return send_file(file_io, as_attachment=True, download_name=f"book_{book_id}.txt", mimetype="text/plain")
+        # Get the book title for the filename if available
+        metadata = db.metadata.find_one({"_id": ObjectId(book_id)})
+        filename = f"{metadata.get('title', f'book_{book_id}')}.txt" if metadata else f"book_{book_id}.txt"
+
+        # Send the file to the user as an attachment with a .txt extension
+        return send_file(file_io, as_attachment=True, download_name=filename, mimetype="text/plain")
+    except Exception as e:
+        return f"Error: {str(e)}", 500
 
 @app.route("/search")
 def search():
     query = request.args.get("query")
     if query:
-        books = query_database("SELECT book_id, title, author FROM Metadata WHERE title LIKE ?", (f"%{query}%",))
-        return jsonify({"books": [{"book_id": book[0], "title": book[1], "author": book[2]} for book in books]})
+        # MongoDB query with case-insensitive search
+        books = list(db.metadata.find({"title": {"$regex": query, "$options": "i"}}, 
+                                     {"_id": 1, "title": 1, "author": 1}))
+        # Transform MongoDB documents for JSON response
+        book_list = []
+        for book in books:
+            book_list.append({
+                "book_id": str(book["_id"]),
+                "title": book["title"],
+                "author": book["author"]
+            })
+        return jsonify({"books": book_list})
     return jsonify({"books": []})
 
 if __name__ == "__main__":
