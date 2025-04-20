@@ -9,7 +9,14 @@ app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = "uploads"
 
 # MongoDB connection
-client = MongoClient("mongodb+srv://ushajawahar23:ushausha@tattva.n09jmdw.mongodb.net/")
+client = MongoClient(
+    "mongodb+srv://ushajawahar23:ushausha@tattva.n09jmdw.mongodb.net/",
+    ssl=True,
+    ssl_cert_reqs='CERT_NONE',  # Disable certificate verification
+    connectTimeoutMS=30000,      # Increase connection timeout
+    serverSelectionTimeoutMS=30000,
+    retryWrites=True
+)
 db = client["tattva"]
 
 @app.route("/", methods=["GET", "POST"])
